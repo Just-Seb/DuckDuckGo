@@ -5,7 +5,7 @@ import os
 
 cwd = os.getcwd()
 
-base = "http://127.0.0.1:5000/getImage""
+base = "http://127.0.0.1:5000/getImage"
 
 image_file = cwd + '/type_of_ducks/HarlequinDuck.png'
 
