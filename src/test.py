@@ -7,7 +7,7 @@ cwd = os.getcwd()
 
 base = "http://127.0.0.1:5000"
 
-image_file = "{0}".format(cwd) + "/sample_image.png"
+image_file = '/home/william/Documents/quackathon/src/sample_image.png'
 
 with open(image_file, "rb") as f:
     im_bytes = f.read()        
