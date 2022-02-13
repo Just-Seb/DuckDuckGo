@@ -1,17 +1,460 @@
 from flask import Flask, jsonify, request,send_file
 from flask_restful import Api, Resource
 
+from tensorflow.keras.models import load_model
+from tensorflow import keras
+import numpy as np
+from resizeimage import resizeimage
+import base64
+from PIL import Image
+import cv2
+import face_recognition
+from itsdangerous import base64_decode
+from numpy import imag
+import os
+
 app = Flask(__name__)
 api = Api(app)
 
-class get_cropped_image(Resource):
-    def get(self):
-        return {"data" : "Hello World"}
+def ImageRec(image):
+    NormFace = base64.b64decode(image)
+    with open('duck.jpg', 'wb') as f:
+        f.write(NormFace)
+    ducks = ['HARLEQUIN DUCK','MALLARD DUCK','MANDRIN DUCK','RED HEADED DUCK','STEAMER DUCK','TEAL DUCK','WOOD DUCK']
+    model = load_model('../model', compile = True)
+    img = keras.preprocessing.image.load_img('duck.jpg')
+    img = resizeimage.resize_cover(img, [224,224])
+    img = keras.preprocessing.image.img_to_array(image)
+    img = np.expand_dims(img, axis=0)
+    prediction = model.predict(img)
+    result = np.argmax(prediction, axis = 1)
+    classes = {'ABBOTTS BABBLER': 0,
+ 'ABBOTTS BOOBY': 1,
+ 'ABYSSINIAN GROUND HORNBILL': 2,
+ 'AFRICAN CROWNED CRANE': 3,
+ 'AFRICAN EMERALD CUCKOO': 4,
+ 'AFRICAN FIREFINCH': 5,
+ 'AFRICAN OYSTER CATCHER': 6,
+ 'ALBATROSS': 7,
+ 'ALBERTS TOWHEE': 8,
+ 'ALEXANDRINE PARAKEET': 9,
+ 'ALPINE CHOUGH': 10,
+ 'ALTAMIRA YELLOWTHROAT': 11,
+ 'AMERICAN AVOCET': 12,
+ 'AMERICAN BITTERN': 13,
+ 'AMERICAN COOT': 14,
+ 'AMERICAN GOLDFINCH': 15,
+ 'AMERICAN KESTREL': 16,
+ 'AMERICAN PIPIT': 17,
+ 'AMERICAN REDSTART': 18,
+ 'AMETHYST WOODSTAR': 19,
+ 'ANDEAN GOOSE': 20,
+ 'ANDEAN LAPWING': 21,
+ 'ANDEAN SISKIN': 22,
+ 'ANHINGA': 23,
+ 'ANIANIAU': 24,
+ 'ANNAS HUMMINGBIRD': 25,
+ 'ANTBIRD': 26,
+ 'ANTILLEAN EUPHONIA': 27,
+ 'APAPANE': 28,
+ 'APOSTLEBIRD': 29,
+ 'ARARIPE MANAKIN': 30,
+ 'ASHY THRUSHBIRD': 31,
+ 'ASIAN CRESTED IBIS': 32,
+ 'AZURE JAY': 33,
+ 'AZURE TANAGER': 34,
+ 'AZURE TIT': 35,
+ 'BAIKAL TEAL': 36,
+ 'BALD EAGLE': 37,
+ 'BALD IBIS': 38,
+ 'BALI STARLING': 39,
+ 'BALTIMORE ORIOLE': 40,
+ 'BANANAQUIT': 41,
+ 'BAND TAILED GUAN': 42,
+ 'BANDED BROADBILL': 43,
+ 'BANDED PITA': 44,
+ 'BANDED STILT': 45,
+ 'BARN OWL': 46,
+ 'BARN SWALLOW': 47,
+ 'BARRED PUFFBIRD': 48,
+ 'BARROWS GOLDENEYE': 49,
+ 'BAY-BREASTED WARBLER': 50,
+ 'BEARDED BARBET': 51,
+ 'BEARDED BELLBIRD': 52,
+ 'BEARDED REEDLING': 53,
+ 'BELTED KINGFISHER': 54,
+ 'BIRD OF PARADISE': 55,
+ 'BLACK & YELLOW  BROADBILL': 56,
+ 'BLACK BAZA': 57,
+ 'BLACK COCKATO': 58,
+ 'BLACK FRANCOLIN': 59,
+ 'BLACK SKIMMER': 60,
+ 'BLACK SWAN': 61,
+ 'BLACK TAIL CRAKE': 62,
+ 'BLACK THROATED BUSHTIT': 63,
+ 'BLACK THROATED WARBLER': 64,
+ 'BLACK VULTURE': 65,
+ 'BLACK-CAPPED CHICKADEE': 66,
+ 'BLACK-NECKED GREBE': 67,
+ 'BLACK-THROATED SPARROW': 68,
+ 'BLACKBURNIAM WARBLER': 69,
+ 'BLONDE CRESTED WOODPECKER': 70,
+ 'BLUE COAU': 71,
+ 'BLUE GROUSE': 72,
+ 'BLUE HERON': 73,
+ 'BLUE THROATED TOUCANET': 74,
+ 'BOBOLINK': 75,
+ 'BORNEAN BRISTLEHEAD': 76,
+ 'BORNEAN LEAFBIRD': 77,
+ 'BORNEAN PHEASANT': 78,
+ 'BRANDT CORMARANT': 79,
+ 'BROWN CREPPER': 80,
+ 'BROWN NOODY': 81,
+ 'BROWN THRASHER': 82,
+ 'BULWERS PHEASANT': 83,
+ 'BUSH TURKEY': 84,
+ 'CACTUS WREN': 85,
+ 'CALIFORNIA CONDOR': 86,
+ 'CALIFORNIA GULL': 87,
+ 'CALIFORNIA QUAIL': 88,
+ 'CANARY': 89,
+ 'CAPE GLOSSY STARLING': 90,
+ 'CAPE LONGCLAW': 91,
+ 'CAPE MAY WARBLER': 92,
+ 'CAPE ROCK THRUSH': 93,
+ 'CAPPED HERON': 94,
+ 'CAPUCHINBIRD': 95,
+ 'CARMINE BEE-EATER': 96,
+ 'CASPIAN TERN': 97,
+ 'CASSOWARY': 98,
+ 'CEDAR WAXWING': 99,
+ 'CERULEAN WARBLER': 100,
+ 'CHARA DE COLLAR': 101,
+ 'CHATTERING LORY': 102,
+ 'CHESTNET BELLIED EUPHONIA': 103,
+ 'CHINESE BAMBOO PARTRIDGE': 104,
+ 'CHINESE POND HERON': 105,
+ 'CHIPPING SPARROW': 106,
+ 'CHUCAO TAPACULO': 107,
+ 'CHUKAR PARTRIDGE': 108,
+ 'CINNAMON ATTILA': 109,
+ 'CINNAMON FLYCATCHER': 110,
+ 'CINNAMON TEAL': 111,
+ 'CLARKS NUTCRACKER': 112,
+ 'COCK OF THE  ROCK': 113,
+ 'COCKATOO': 114,
+ 'COLLARED ARACARI': 115,
+ 'COMMON FIRECREST': 116,
+ 'COMMON GRACKLE': 117,
+ 'COMMON HOUSE MARTIN': 118,
+ 'COMMON IORA': 119,
+ 'COMMON LOON': 120,
+ 'COMMON POORWILL': 121,
+ 'COMMON STARLING': 122,
+ 'COPPERY TAILED COUCAL': 123,
+ 'CRAB PLOVER': 124,
+ 'CRANE HAWK': 125,
+ 'CREAM COLORED WOODPECKER': 126,
+ 'CRESTED CARACARA': 127,
+ 'CRESTED COUA': 128,
+ 'CRESTED FIREBACK': 129,
+ 'CRESTED KINGFISHER': 130,
+ 'CRESTED NUTHATCH': 131,
+ 'CRESTED OROPENDOLA': 132,
+ 'CRESTED SHRIKETIT': 133,
+ 'CRIMSON CHAT': 134,
+ 'CRIMSON SUNBIRD': 135,
+ 'CROW': 136,
+ 'CROWNED PIGEON': 137,
+ 'CUBAN TODY': 138,
+ 'CUBAN TROGON': 139,
+ 'CURL CRESTED ARACURI': 140,
+ 'D-ARNAUDS BARBET': 141,
+ 'DARK EYED JUNCO': 142,
+ 'DEMOISELLE CRANE': 143,
+ 'DOUBLE BARRED FINCH': 144,
+ 'DOUBLE BRESTED CORMARANT': 145,
+ 'DOUBLE EYED FIG PARROT': 146,
+ 'DOWNY WOODPECKER': 147,
+ 'EARED PITA': 148,
+ 'EASTERN BLUEBIRD': 149,
+ 'EASTERN GOLDEN WEAVER': 150,
+ 'EASTERN MEADOWLARK': 151,
+ 'EASTERN ROSELLA': 152,
+ 'EASTERN TOWEE': 153,
+ 'ELEGANT TROGON': 154,
+ 'ELLIOTS  PHEASANT': 155,
+ 'EMPEROR PENGUIN': 156,
+ 'EMU': 157,
+ 'ENGGANO MYNA': 158,
+ 'EURASIAN GOLDEN ORIOLE': 159,
+ 'EURASIAN MAGPIE': 160,
+ 'EVENING GROSBEAK': 161,
+ 'FAIRY BLUEBIRD': 162,
+ 'FIRE TAILLED MYZORNIS': 163,
+ 'FLAME TANAGER': 164,
+ 'FLAMINGO': 165,
+ 'FRIGATE': 166,
+ 'GAMBELS QUAIL': 167,
+ 'GANG GANG COCKATOO': 168,
+ 'GILA WOODPECKER': 169,
+ 'GILDED FLICKER': 170,
+ 'GLOSSY IBIS': 171,
+ 'GO AWAY BIRD': 172,
+ 'GOLD WING WARBLER': 173,
+ 'GOLDEN CHEEKED WARBLER': 174,
+ 'GOLDEN CHLOROPHONIA': 175,
+ 'GOLDEN EAGLE': 176,
+ 'GOLDEN PHEASANT': 177,
+ 'GOLDEN PIPIT': 178,
+ 'GOULDIAN FINCH': 179,
+ 'GRAY CATBIRD': 180,
+ 'GRAY KINGBIRD': 181,
+ 'GRAY PARTRIDGE': 182,
+ 'GREAT GRAY OWL': 183,
+ 'GREAT KISKADEE': 184,
+ 'GREAT POTOO': 185,
+ 'GREATOR SAGE GROUSE': 186,
+ 'GREEN BROADBILL': 187,
+ 'GREEN JAY': 188,
+ 'GREEN MAGPIE': 189,
+ 'GREY PLOVER': 190,
+ 'GROVED BILLED ANI': 191,
+ 'GUINEA TURACO': 192,
+ 'GUINEAFOWL': 193,
+ 'GYRFALCON': 194,
+ 'HARLEQUIN DUCK': 195,
+ 'HARPY EAGLE': 196,
+ 'HAWAIIAN GOOSE': 197,
+ 'HELMET VANGA': 198,
+ 'HIMALAYAN MONAL': 199,
+ 'HOATZIN': 200,
+ 'HOODED MERGANSER': 201,
+ 'HOOPOES': 202,
+ 'HORNBILL': 203,
+ 'HORNED GUAN': 204,
+ 'HORNED LARK': 205,
+ 'HORNED SUNGEM': 206,
+ 'HOUSE FINCH': 207,
+ 'HOUSE SPARROW': 208,
+ 'HYACINTH MACAW': 209,
+ 'IMPERIAL SHAQ': 210,
+ 'INCA TERN': 211,
+ 'INDIAN BUSTARD': 212,
+ 'INDIAN PITTA': 213,
+ 'INDIAN ROLLER': 214,
+ 'INDIGO BUNTING': 215,
+ 'IWI': 216,
+ 'JABIRU': 217,
+ 'JAVA SPARROW': 218,
+ 'KAGU': 219,
+ 'KAKAPO': 220,
+ 'KILLDEAR': 221,
+ 'KING VULTURE': 222,
+ 'KIWI': 223,
+ 'KOOKABURRA': 224,
+ 'LARK BUNTING': 225,
+ 'LAZULI BUNTING': 226,
+ 'LILAC ROLLER': 227,
+ 'LONG-EARED OWL': 228,
+ 'MAGPIE GOOSE': 229,
+ 'MALABAR HORNBILL': 230,
+ 'MALACHITE KINGFISHER': 231,
+ 'MALAGASY WHITE EYE': 232,
+ 'MALEO': 233,
+ 'MALLARD DUCK': 234,
+ 'MANDRIN DUCK': 235,
+ 'MANGROVE CUCKOO': 236,
+ 'MARABOU STORK': 237,
+ 'MASKED BOOBY': 238,
+ 'MASKED LAPWING': 239,
+ 'MIKADO  PHEASANT': 240,
+ 'MOURNING DOVE': 241,
+ 'MYNA': 242,
+ 'NICOBAR PIGEON': 243,
+ 'NOISY FRIARBIRD': 244,
+ 'NORTHERN CARDINAL': 245,
+ 'NORTHERN FLICKER': 246,
+ 'NORTHERN FULMAR': 247,
+ 'NORTHERN GANNET': 248,
+ 'NORTHERN GOSHAWK': 249,
+ 'NORTHERN JACANA': 250,
+ 'NORTHERN MOCKINGBIRD': 251,
+ 'NORTHERN PARULA': 252,
+ 'NORTHERN RED BISHOP': 253,
+ 'NORTHERN SHOVELER': 254,
+ 'OCELLATED TURKEY': 255,
+ 'OKINAWA RAIL': 256,
+ 'ORANGE BRESTED BUNTING': 257,
+ 'ORIENTAL BAY OWL': 258,
+ 'OSPREY': 259,
+ 'OSTRICH': 260,
+ 'OVENBIRD': 261,
+ 'OYSTER CATCHER': 262,
+ 'PAINTED BUNTING': 263,
+ 'PALILA': 264,
+ 'PARADISE TANAGER': 265,
+ 'PARAKETT  AKULET': 266,
+ 'PARUS MAJOR': 267,
+ 'PATAGONIAN SIERRA FINCH': 268,
+ 'PEACOCK': 269,
+ 'PELICAN': 270,
+ 'PEREGRINE FALCON': 271,
+ 'PHILIPPINE EAGLE': 272,
+ 'PINK ROBIN': 273,
+ 'POMARINE JAEGER': 274,
+ 'PUFFIN': 275,
+ 'PURPLE FINCH': 276,
+ 'PURPLE GALLINULE': 277,
+ 'PURPLE MARTIN': 278,
+ 'PURPLE SWAMPHEN': 279,
+ 'PYGMY KINGFISHER': 280,
+ 'QUETZAL': 281,
+ 'RAINBOW LORIKEET': 282,
+ 'RAZORBILL': 283,
+ 'RED BEARDED BEE EATER': 284,
+ 'RED BELLIED PITTA': 285,
+ 'RED BROWED FINCH': 286,
+ 'RED FACED CORMORANT': 287,
+ 'RED FACED WARBLER': 288,
+ 'RED FODY': 289,
+ 'RED HEADED DUCK': 290,
+ 'RED HEADED WOODPECKER': 291,
+ 'RED HONEY CREEPER': 292,
+ 'RED NAPED TROGON': 293,
+ 'RED TAILED HAWK': 294,
+ 'RED TAILED THRUSH': 295,
+ 'RED WINGED BLACKBIRD': 296,
+ 'RED WISKERED BULBUL': 297,
+ 'REGENT BOWERBIRD': 298,
+ 'RING-NECKED PHEASANT': 299,
+ 'ROADRUNNER': 300,
+ 'ROBIN': 301,
+ 'ROCK DOVE': 302,
+ 'ROSY FACED LOVEBIRD': 303,
+ 'ROUGH LEG BUZZARD': 304,
+ 'ROYAL FLYCATCHER': 305,
+ 'RUBY THROATED HUMMINGBIRD': 306,
+ 'RUDY KINGFISHER': 307,
+ 'RUFOUS KINGFISHER': 308,
+ 'RUFUOS MOTMOT': 309,
+ 'SAMATRAN THRUSH': 310,
+ 'SAND MARTIN': 311,
+ 'SANDHILL CRANE': 312,
+ 'SATYR TRAGOPAN': 313,
+ 'SCARLET CROWNED FRUIT DOVE': 314,
+ 'SCARLET IBIS': 315,
+ 'SCARLET MACAW': 316,
+ 'SCARLET TANAGER': 317,
+ 'SHOEBILL': 318,
+ 'SHORT BILLED DOWITCHER': 319,
+ 'SMITHS LONGSPUR': 320,
+ 'SNOWY EGRET': 321,
+ 'SNOWY OWL': 322,
+ 'SORA': 323,
+ 'SPANGLED COTINGA': 324,
+ 'SPLENDID WREN': 325,
+ 'SPOON BILED SANDPIPER': 326,
+ 'SPOONBILL': 327,
+ 'SPOTTED CATBIRD': 328,
+ 'SRI LANKA BLUE MAGPIE': 329,
+ 'STEAMER DUCK': 330,
+ 'STORK BILLED KINGFISHER': 331,
+ 'STRAWBERRY FINCH': 332,
+ 'STRIPED OWL': 333,
+ 'STRIPPED MANAKIN': 334,
+ 'STRIPPED SWALLOW': 335,
+ 'SUPERB STARLING': 336,
+ 'SWINHOES PHEASANT': 337,
+ 'TAILORBIRD': 338,
+ 'TAIWAN MAGPIE': 339,
+ 'TAKAHE': 340,
+ 'TASMANIAN HEN': 341,
+ 'TEAL DUCK': 342,
+ 'TIT MOUSE': 343,
+ 'TOUCHAN': 344,
+ 'TOWNSENDS WARBLER': 345,
+ 'TREE SWALLOW': 346,
+ 'TROPICAL KINGBIRD': 347,
+ 'TRUMPTER SWAN': 348,
+ 'TURKEY VULTURE': 349,
+ 'TURQUOISE MOTMOT': 350,
+ 'UMBRELLA BIRD': 351,
+ 'VARIED THRUSH': 352,
+ 'VENEZUELIAN TROUPIAL': 353,
+ 'VERMILION FLYCATHER': 354,
+ 'VICTORIA CROWNED PIGEON': 355,
+ 'VIOLET GREEN SWALLOW': 356,
+ 'VULTURINE GUINEAFOWL': 357,
+ 'WALL CREAPER': 358,
+ 'WATTLED CURASSOW': 359,
+ 'WATTLED LAPWING': 360,
+ 'WHIMBREL': 361,
+ 'WHITE BROWED CRAKE': 362,
+ 'WHITE CHEEKED TURACO': 363,
+ 'WHITE NECKED RAVEN': 364,
+ 'WHITE TAILED TROPIC': 365,
+ 'WHITE THROATED BEE EATER': 366,
+ 'WILD TURKEY': 367,
+ 'WILSONS BIRD OF PARADISE': 368,
+ 'WOOD DUCK': 369,
+ 'YELLOW BELLIED FLOWERPECKER': 370,
+ 'YELLOW CACIQUE': 371,
+ 'YELLOW HEADED BLACKBIRD': 372}
+    for i in ducks:
+        if classes[i] == result:
+            return(i)
+    return("Not a duck")
 
-api.add_resource(get_cropped_image, "/getImage")
+@app.route('/getImage', methods=['POST'])
+def getImage():
+    data = request.get_json()
+    print(data['face'])
+    duck_name = ImageRec(data['duck'])
+    
+    duck_image = os.get_cwd()
+    if (duck_name == 'HARLEQUIN DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'MALLARD DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'MANDRIN DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'RED HEADED DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'STEAMER DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'TEAL DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
+    elif (duck_name == 'WOOD DUCK'):
+        duck_image = os.path.join(duck_image, "type_of_duck")
 
+    return duckFace(data['face'], )
+    
+def duckFace(Face, Duck):
+    NormFace = base64.b64decode(Face)
+    with open('face.png', 'wb') as f:
+        f.write(NormFace)
+
+
+    frame = cv2.imread('face.png')
+    rgb_frame = frame[:, :, ::-1]
+
+    face_locations = face_recognition.face_locations(rgb_frame)
+    print(face_locations)
+
+    for top, right, bottom, left in face_locations:
+        print((int(((right + left) / 2)), int(((top + bottom) / 2))))
+        person = Image.open('face.png')
+        duck = Image.open(Duck)
+        duck = duck.resize((150,130))
+        person.paste(duck, ((int(((right + left) / 2) - duck.size[0]) + 60),(int(((top + bottom) / 2) - duck.size[1] / 2)) - 20), duck)
+        person.show()
+
+    with open("face.png", "rb") as f:
+        im_bytes = f.read()        
+    im_b64 = base64.b64encode(im_bytes).decode("utf8")
+
+    return im_b64
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
-
+    app.run(host = "127.0.0.1", port = 5000)
